@@ -251,7 +251,7 @@ select,input[type=text]{padding:8px 10px;border:1.5px solid var(--rule-soft);bac
         <div class="field"><label for="lang">Langue du CV final</label>
           <select id="lang"><option value="auto">Même langue que le CV</option><option value="fr">Français</option><option value="en">Anglais</option></select></div>
         <div class="field"><label for="tone">Style de rédaction</label>
-          <select id="tone"><option value="sobre">Sobre et factuel</option><option value="impact">Orienté résultats</option><option value="concis">Très concis (1 page)</option></select></div>
+          <select id="tone"><option value="sobre">Sobre et factuel — 1 page</option><option value="impact">Orienté résultats — 1 page</option><option value="concis">Très concis — 1 page courte</option><option value="detaille">Détaillé — 2 pages max</option></select></div>
       </div>
       <div class="field hidden" id="codeField"><label for="accessCode">Code d'accès <small>fourni avec le lien</small></label><input type="text" id="accessCode" autocomplete="off" placeholder="Code communiqué par l'expéditeur"></div>
       <button class="btn primary lg" id="btnOptimize" type="button">
@@ -502,9 +502,9 @@ function analyze(cvRaw, jobRaw){
     qpts<7 ? 'Chiffrez vos résultats : budget géré, % de croissance, nombre de personnes encadrées, délais tenus.' : null);
 
   // length
-  const lpts = wc>=300&&wc<=900?10:wc>=200&&wc<=1200?6:wc>0?2:0;
-  add('length','Longueur adaptée', lpts>=10?'pass':lpts>=6?'warn':'fail', lpts, 10, `${wc} mots (idéal : 300 à 900, soit 1 à 2 pages)`,
-    wc<300 ? 'Le CV est court : détaillez les missions et résultats de chaque poste.' : wc>900 ? 'Le CV est long : condensez à 2 pages maximum, gardez les 10 dernières années.' : null);
+  const lpts = wc>=280&&wc<=650?10:wc>=200&&wc<=900?6:wc>0?2:0;
+  add('length','Longueur adaptée', lpts>=10?'pass':lpts>=6?'warn':'fail', lpts, 10, `${wc} mots (idéal : 280 à 650, soit une page pleine)`,
+    wc<280 ? 'Le CV est court : détaillez les missions et résultats de chaque poste.' : wc>650 ? 'Le CV est long : visez une page, gardez les 10 dernières années et 3 à 4 puces par poste.' : null);
 
   // formatting risks
   const risks = [];
@@ -837,10 +837,11 @@ $('expDocx').addEventListener('click', async ()=>{
   const D = window.docx; const cv = state.cv; const en = isEnglish(cv);
   const L = en ? {sum:'PROFESSIONAL SUMMARY', sk:'SKILLS', xp:'PROFESSIONAL EXPERIENCE', ed:'EDUCATION', cert:'CERTIFICATIONS'} : {sum:'PROFIL PROFESSIONNEL', sk:'COMPÉTENCES', xp:'EXPÉRIENCE PROFESSIONNELLE', ed:'FORMATION', cert:'CERTIFICATIONS'};
   const F = 'Arial';
-  const P = (runs, opts={}) => new D.Paragraph({ children: runs.map(r=>typeof r==='string'?new D.TextRun({text:r,font:F,size:21}):r), spacing:{after:opts.after??60, before:opts.before??0}, ...(opts.bullet?{bullet:{level:0}}:{}), ...(opts.tabs?{tabStops:[{type:D.TabStopType.RIGHT,position:9000}]}:{}) });
-  const R = (text, o={}) => new D.TextRun({ text, font:F, size:o.size||21, bold:!!o.bold, color:o.color, italics:!!o.it });
+  const compact = wordCount(cvToText(cv)) > 430; const FS = compact ? 20 : 21; const GAP = compact ? 0.6 : 1;
+  const P = (runs, opts={}) => new D.Paragraph({ children: runs.map(r=>typeof r==='string'?new D.TextRun({text:r,font:F,size:FS}):r), spacing:{after:Math.round((opts.after??60)*GAP), before:Math.round((opts.before??0)*GAP)}, ...(opts.bullet?{bullet:{level:0}}:{}), ...(opts.tabs?{tabStops:[{type:D.TabStopType.RIGHT,position:9000}]}:{}) });
+  const R = (text, o={}) => new D.TextRun({ text, font:F, size:o.size||FS, bold:!!o.bold, color:o.color, italics:!!o.it });
   const modern = state.tpl==='moderne'; const ACC = hexNoHash(state.accent);
-  const H = t => new D.Paragraph({ children:[R(t,{bold:true,size:23,color:modern?ACC:undefined})], spacing:{before:240,after:90}, border:{bottom:{color:modern?ACC:'808080',space:1,style:D.BorderStyle.SINGLE,size:modern?12:6}} });
+  const H = t => new D.Paragraph({ children:[R(t,{bold:true,size:23,color:modern?ACC:undefined})], spacing:{before:Math.round(240*GAP),after:Math.round(90*GAP)}, border:{bottom:{color:modern?ACC:'808080',space:1,style:D.BorderStyle.SINGLE,size:modern?12:6}} });
   const ch = [];
   const cl = ['email','phone','location','linkedin','website'].map(k=>cv.contact[k]).filter(Boolean).join('  |  ');
   if (modern){
@@ -866,42 +867,53 @@ $('expDocx').addEventListener('click', async ()=>{
     if (x.details) ch.push(P([x.details])); }); }
   if (cv.certifications.length){ ch.push(H(L.cert)); cv.certifications.forEach(b=>ch.push(P([b],{bullet:true,after:30}))); }
   cv.extras.forEach(x=>{ ch.push(H(x.heading.toUpperCase())); x.lines.forEach(b=>ch.push(P([b],{bullet:true,after:30}))); });
-  const doc = new D.Document({ creator:'Passe-ATS', title:'CV '+cv.name, styles:{default:{document:{run:{font:F,size:21}}}}, sections:[{ properties:{ page:{ margin:{top:modern?700:900,bottom:900,left:1000,right:1000} } }, children: ch }] });
+  const doc = new D.Document({ creator:'Passe-ATS', title:'CV '+cv.name, styles:{default:{document:{run:{font:F,size:FS}}}}, sections:[{ properties:{ page:{ margin:{top:modern?(compact?500:700):(compact?700:900),bottom:compact?700:900,left:compact?900:1000,right:compact?900:1000} } }, children: ch }] });
   const blob = await D.Packer.toBlob(doc);
   deliver(`CV_${fileBase()}.docx`, blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 });
 
-$('expPdf').addEventListener('click', ()=>{
-  if (!window.jspdf){ toast('Le générateur PDF n\'a pas pu se charger.'); return; }
+function buildPdf(k){
   const cv = state.cv; const en = isEnglish(cv);
   const L = en ? {sum:'PROFESSIONAL SUMMARY', sk:'SKILLS', xp:'PROFESSIONAL EXPERIENCE', ed:'EDUCATION', cert:'CERTIFICATIONS'} : {sum:'PROFIL PROFESSIONNEL', sk:'COMPÉTENCES', xp:'EXPÉRIENCE PROFESSIONNELLE', ed:'FORMATION', cert:'CERTIFICATIONS'};
-  const doc = new jspdf.jsPDF({unit:'pt',format:'a4'}); const W = 595.28, M = 48, CW = W - 2*M; let y = M;
+  const doc = new jspdf.jsPDF({unit:'pt',format:'a4'}); const W = 595.28, M = Math.round(48*k), CW = W - 2*M; let y = M;
   const modern = state.tpl==='moderne'; const [ar,ag,ab] = hexRgb(state.accent); const ACCENT = state.accent;
   const nl = h => { if (y + h > 841.89 - M){ doc.addPage(); y = M; } };
-  const text = (t, size, style, opts={}) => { doc.setFont('helvetica', style||'normal'); doc.setFontSize(size); doc.setTextColor(opts.color||'#111111'); const lines = doc.splitTextToSize(t, opts.width||CW); lines.forEach(l=>{ nl(size*1.3); doc.text(l, opts.x||M, y); y += size*1.3; }); y += opts.after||0; };
-  const head = t => { y += 8; nl(20); doc.setFont('helvetica','bold'); doc.setFontSize(modern?11:10.5); doc.setTextColor(modern?ACCENT:'#111111'); doc.text(t, M, y); if (modern){ doc.setDrawColor(ar,ag,ab); doc.setLineWidth(1.4); } else { doc.setDrawColor(128); doc.setLineWidth(.6); } doc.line(M, y+4, W-M, y+4); y += 17; };
-  const bullet = t => { doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor('#111111'); const lines = doc.splitTextToSize(t, CW-14); lines.forEach((l,i)=>{ nl(13); if (i===0){ if (modern){ doc.setFillColor(ar,ag,ab); doc.circle(M+4.5, y-3.2, 1.8, 'F'); } else doc.text('•', M+2, y); } doc.text(l, M+14, y); y += 13; }); };
-  const line2 = (left, right, size, style, color) => { nl(size*1.4); doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(color||'#111111'); const rw = right ? doc.getTextWidth(right) : 0; const ll = doc.splitTextToSize(left, CW - rw - 10); doc.text(ll[0]||'', M, y); if (right){ doc.setFont('helvetica', modern?'bold':'normal'); doc.setTextColor(modern?ACCENT:'#444444'); doc.text(right, W-M, y, {align:'right'}); } y += size*1.4; ll.slice(1).forEach(l=>{ nl(size*1.4); doc.setFont('helvetica',style); doc.setTextColor(color||'#111111'); doc.text(l, M, y); y += size*1.4; }); };
+  // k = scale factor (1 = normal); the caller shrinks it until the CV fits on one page
+  const S = v => v*k;
+  const _sfs = doc.setFontSize.bind(doc); doc.setFontSize = v => _sfs(v*k);
+  const text = (t, size, style, opts={}) => { doc.setFont('helvetica', style||'normal'); doc.setFontSize(size); doc.setTextColor(opts.color||'#111111'); const lines = doc.splitTextToSize(t, opts.width||CW); lines.forEach(l=>{ nl(S(size*1.3)); doc.text(l, opts.x||M, y); y += S(size*1.3); }); y += S(opts.after||0); };
+  const head = t => { y += S(8); nl(S(20)); doc.setFont('helvetica','bold'); doc.setFontSize(modern?11:10.5); doc.setTextColor(modern?ACCENT:'#111111'); doc.text(t, M, y); if (modern){ doc.setDrawColor(ar,ag,ab); doc.setLineWidth(1.4); } else { doc.setDrawColor(128); doc.setLineWidth(.6); } doc.line(M, y+S(4), W-M, y+S(4)); y += S(17); };
+  const bullet = t => { doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor('#111111'); const lines = doc.splitTextToSize(t, CW-14); lines.forEach((l,i)=>{ nl(S(13)); if (i===0){ if (modern){ doc.setFillColor(ar,ag,ab); doc.circle(M+S(4.5), y-S(3.2), S(1.8), 'F'); } else doc.text('•', M+2, y); } doc.text(l, M+S(14), y); y += S(13); }); };
+  const line2 = (left, right, size, style, color) => { nl(S(size*1.4)); doc.setFont('helvetica', style); doc.setFontSize(size); doc.setTextColor(color||'#111111'); const rw = right ? doc.getTextWidth(right) : 0; const ll = doc.splitTextToSize(left, CW - rw - 10); doc.text(ll[0]||'', M, y); if (right){ doc.setFont('helvetica', modern?'bold':'normal'); doc.setTextColor(modern?ACCENT:'#444444'); doc.text(right, W-M, y, {align:'right'}); } y += S(size*1.4); ll.slice(1).forEach(l=>{ nl(S(size*1.4)); doc.setFont('helvetica',style); doc.setTextColor(color||'#111111'); doc.text(l, M, y); y += S(size*1.4); }); };
   const cl = ['email','phone','location','linkedin','website'].map(k=>cv.contact[k]).filter(Boolean).join('  |  ');
   if (modern){
-    const bandH = 78 + (cv.title?16:0) + (cl?14:0);
+    const bandH = S(78 + (cv.title?16:0) + (cl?14:0));
     doc.setFillColor(ar,ag,ab); doc.rect(0, 0, W, bandH, 'F');
-    y = 40; doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor('#FFFFFF'); doc.text(cv.name, M, y); y += 18;
-    if (cv.title){ doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor('#FFFFFF'); doc.text(cv.title, M, y); y += 16; }
-    if (cl){ doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor('#FFFFFF'); const cls = doc.splitTextToSize(cl, CW); doc.text(cls[0], M, y); y += 14; }
-    y = bandH + 14;
+    y = S(40); doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.setTextColor('#FFFFFF'); doc.text(cv.name, M, y); y += S(18);
+    if (cv.title){ doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor('#FFFFFF'); doc.text(cv.title, M, y); y += S(16); }
+    if (cl){ doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor('#FFFFFF'); const cls = doc.splitTextToSize(cl, CW); doc.text(cls[0], M, y); y += S(14); }
+    y = bandH + S(14);
   } else {
     text(cv.name, 18, 'bold'); if (cv.title) text(cv.title, 11, 'normal', {color:'#444444'});
     if (cl) text(cl, 9, 'normal', {color:'#444444', after:2});
-    doc.setDrawColor(17); doc.setLineWidth(1.2); doc.line(M, y, W-M, y); y += 6;
+    doc.setDrawColor(17); doc.setLineWidth(1.2); doc.line(M, y, W-M, y); y += S(6);
   }
   if (cv.summary){ head(L.sum); text(cv.summary, 10, 'normal'); }
-  if (cv.skills.length){ head(L.sk); cv.skills.forEach(s=>{ const lab = s.category?s.category+' : ':''; doc.setFont('helvetica','bold'); doc.setFontSize(10); const lw = doc.getTextWidth(lab); nl(13); doc.setTextColor(modern?ACCENT:'#111111'); doc.text(lab, M, y); doc.setTextColor('#111111'); doc.setFont('helvetica','normal'); const lines = doc.splitTextToSize(s.items.join(', '), CW-lw); lines.forEach((l,i)=>{ if(i>0){ nl(13);} doc.text(l, M+lw, y); y += 13; }); }); }
-  if (cv.experience.length){ head(L.xp); cv.experience.forEach(x=>{ y += 3; line2(x.title, `${x.start}${x.end?' – '+x.end:''}`, 10.5, 'bold'); line2(`${x.company}${x.location?' – '+x.location:''}`, '', 9.5, 'italic', '#444444'); x.bullets.forEach(bullet); }); }
-  if (cv.education.length){ head(L.ed); cv.education.forEach(x=>{ y += 3; line2(x.degree, `${x.start?x.start+' – ':''}${x.end}`, 10.5, 'bold'); line2(`${x.school}${x.location?' – '+x.location:''}`, '', 9.5, 'italic', '#444444'); if (x.details) text(x.details, 10, 'normal'); }); }
+  if (cv.skills.length){ head(L.sk); cv.skills.forEach(s=>{ const lab = s.category?s.category+' : ':''; doc.setFont('helvetica','bold'); doc.setFontSize(10); const lw = doc.getTextWidth(lab); nl(S(13)); doc.setTextColor(modern?ACCENT:'#111111'); doc.text(lab, M, y); doc.setTextColor('#111111'); doc.setFont('helvetica','normal'); const lines = doc.splitTextToSize(s.items.join(', '), CW-lw); lines.forEach((l,i)=>{ if(i>0){ nl(S(13));} doc.text(l, M+lw, y); y += S(13); }); }); }
+  if (cv.experience.length){ head(L.xp); cv.experience.forEach(x=>{ y += S(3); line2(x.title, `${x.start}${x.end?' – '+x.end:''}`, 10.5, 'bold'); line2(`${x.company}${x.location?' – '+x.location:''}`, '', 9.5, 'italic', '#444444'); x.bullets.forEach(bullet); }); }
+  if (cv.education.length){ head(L.ed); cv.education.forEach(x=>{ y += S(3); line2(x.degree, `${x.start?x.start+' – ':''}${x.end}`, 10.5, 'bold'); line2(`${x.school}${x.location?' – '+x.location:''}`, '', 9.5, 'italic', '#444444'); if (x.details) text(x.details, 10, 'normal'); }); }
   if (cv.certifications.length){ head(L.cert); cv.certifications.forEach(bullet); }
   cv.extras.forEach(x=>{ head(x.heading.toUpperCase()); x.lines.forEach(bullet); });
   doc.setProperties({ title:'CV '+cv.name, creator:'Passe-ATS' });
+  return doc;
+}
+$('expPdf').addEventListener('click', ()=>{
+  if (!window.jspdf){ toast('Le générateur PDF n\'a pas pu se charger.'); return; }
+  // Fit to one page: shrink progressively (never below 78 %); beyond that, keep 2 pages.
+  let doc = null, used = 1;
+  for (const k of [1, 0.95, 0.9, 0.86, 0.82, 0.78]){ doc = buildPdf(k); used = k; if (doc.getNumberOfPages() === 1) break; }
+  if (doc.getNumberOfPages() > 1) toast('CV dense : exporté sur 2 pages. Réduisez les puces ou choisissez « Très concis ».');
+  else if (used < 1) toast('Mise à l\'échelle ' + Math.round(used*100) + ' % pour tenir sur une page');
   deliver(`CV_${fileBase()}.pdf`, doc.output('blob'), 'application/pdf');
 });
 
