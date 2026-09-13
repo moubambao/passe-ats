@@ -1,0 +1,9 @@
+{
+  "name": "passe-ats",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Analyse, optimise et exporte un CV pour passer les filtres ATS.",
+  "scripts": { "start": "node server.js", "dev": "node --env-file=.env server.js" },
+  "engines": { "node": ">=20" }
+}
