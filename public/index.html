@@ -211,6 +211,15 @@ select,input[type=text]{padding:8px 10px;border:1.5px solid var(--rule-soft);bac
 .exp h4{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-stretch:85%}
 .exp p{font-size:12.5px;color:var(--ink-2);line-height:1.4}
 .exp .btn{justify-content:center;margin-top:auto}
+.linkbtn{background:none;border:none;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;font-size:inherit;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(21,21,21,.55);display:grid;place-items:center;padding:16px;z-index:20}
+.modal-card{background:var(--paper);border:1.5px solid var(--rule);max-width:460px;width:100%;padding:24px 22px 20px;position:relative;box-shadow:8px 8px 0 var(--marker)}
+.modal-card h3{font-size:22px;font-weight:800;font-stretch:85%;margin:4px 0 10px}
+.modal-p{font-size:14px;color:var(--ink-2);line-height:1.5;margin-bottom:16px;white-space:pre-line}
+.modal-x{position:absolute;top:8px;right:10px;background:none;border:none;font-size:24px;line-height:1;color:var(--ink-3);cursor:pointer}
+.btn.wa{background:#1E7A3C;border-color:#1E7A3C;color:#fff;text-decoration:none}
+.btn.wa:hover{background:#166330;border-color:#166330;color:#fff}
+.btn.wa svg{width:18px;height:18px}
 .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 16px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10;max-width:90vw;font-family:var(--mono);font-size:12.5px}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .foot{margin-top:22px;font-size:12px;color:var(--ink-3);text-align:left;line-height:1.5;font-family:var(--mono);max-width:90ch}
@@ -253,12 +262,13 @@ select,input[type=text]{padding:8px 10px;border:1.5px solid var(--rule-soft);bac
         <div class="field"><label for="tone">Style de rédaction</label>
           <select id="tone"><option value="sobre">Sobre et factuel — 1 page</option><option value="impact">Orienté résultats — 1 page</option><option value="concis">Très concis — 1 page courte</option><option value="detaille">Détaillé — 2 pages max</option></select></div>
       </div>
-      <div class="field hidden" id="codeField"><label for="accessCode">Code d'accès <small>fourni avec le lien</small></label><input type="text" id="accessCode" autocomplete="off" placeholder="Code communiqué par l'expéditeur"></div>
-      <button class="btn primary lg" id="btnOptimize" type="button">
+      <button class="btn primary lg" id="btnFree" type="button">Générer mon CV ATS — gratuit</button>
+      <p class="note">Conversion automatique : structure à une colonne, titres standards, coordonnées isolées, puces normalisées. Instantané, illimité, sans IA.</p>
+      <button class="btn lg" id="btnOptimize" type="button">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/></svg>
-        Optimiser le CV avec l'IA
+        Optimiser avec l'IA — forfait
       </button>
-      <p class="note" id="aiNote">L'IA reformule, structure et intègre les mots-clés de l'offre sans inventer d'expérience. L'analyse ATS ci-contre est instantanée et ne nécessite pas l'IA.</p>
+      <p class="note" id="aiNote">L'IA réécrit le CV, intègre les mots-clés de l'offre et le fait tenir sur une page, sans inventer d'expérience. Accès avec un code de forfait. <button type="button" class="linkbtn" id="btnHaveCode">J'ai un code</button></p>
     </div>
   </aside>
 
@@ -345,6 +355,24 @@ select,input[type=text]{padding:8px 10px;border:1.5px solid var(--rule-soft);bac
 </main>
 <p class="foot">Exemple préchargé : candidature fictive de « Camille Durand » pour un poste de Social Media Manager. Remplacez-la par votre CV. L'analyse tourne entièrement dans votre navigateur ; l'optimisation par IA passe par le serveur de ce site : aucun compte n'est nécessaire.</p>
 <div class="toast" id="toast" role="status"></div>
+
+<div class="modal hidden" id="payModal" role="dialog" aria-modal="true" aria-labelledby="payTitle">
+  <div class="modal-card">
+    <button type="button" class="modal-x" id="payClose" aria-label="Fermer">×</button>
+    <p class="eyebrow">Forfait IA</p>
+    <h3 id="payTitle">Optimisation par l'IA</h3>
+    <p class="modal-p" id="offerText">Réécriture complète du CV par l'IA, mots-clés de l'offre intégrés, format une page garanti.</p>
+    <a class="btn primary lg wa" id="waLink" href="#" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5.3-.5c.1-.2 0-.4 0-.5L9.1 6.9c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+      Demander un code sur WhatsApp
+    </a>
+    <p class="note" id="waNote">Vous recevez votre code par message, puis vous le saisissez ci-dessous.</p>
+    <div class="field" style="margin-top:14px"><label for="accessCode">J'ai déjà un code</label>
+      <div class="row"><input type="text" id="accessCode" autocomplete="off" placeholder="Votre code" style="flex:1;min-width:0"><button type="button" class="btn" id="btnCheckCode">Valider</button></div>
+      <p class="note" id="codeStatus"></p></div>
+    <p class="note" style="margin-top:14px">Sans code, la génération gratuite reste disponible : elle met votre CV au format ATS sans réécriture.</p>
+  </div>
+</div>
 
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -664,8 +692,8 @@ function parseJsonLoose(t){
 async function optimize(){
   if (wordCount(state.cvText) < 15){ toast('Collez ou importez d\'abord un CV.'); return; }
   const btn = $('btnOptimize');
-  if (state.aiOff){ heuristicConvert(); toast('IA désactivée sur ce site : conversion manuelle appliquée.'); return; }
-  if (state.needCode && !$('accessCode').value.trim()){ toast('Entrez le code d\'accès fourni par la personne qui vous a envoyé ce lien.'); $('accessCode').focus(); return; }
+  if (state.aiOff){ toast('L\'IA n\'est pas disponible sur ce site pour le moment. Utilisez la génération gratuite.'); return; }
+  if (state.needCode && !state.codeOk){ openPay(); return; }
   btn.disabled = true; showTab('cv');
   $('cvEmpty').classList.add('hidden'); $('cvBody').classList.add('hidden'); $('aiProgress').classList.remove('hidden');
   $('aiStream').textContent = ''; $('aiStatusText').textContent = 'Réflexion en cours… (l\'IA lit le CV et l\'offre, cela prend en général 20 à 60 s)';
@@ -686,17 +714,39 @@ async function optimize(){
   } catch(e){
     const code = (e && e.name==='AbortError') ? 'cancelled' : e && e.code;
     const msg = code==='cancelled' ? 'Optimisation arrêtée.'
-      : code==='code' ? 'Code d\'accès incorrect.'
+      : code==='code' ? 'Code de forfait refusé ou expiré.'
       : code==='rate_limited' ? 'Trop de demandes en peu de temps : réessayez dans une minute.'
       : code==='invalid_json' ? 'L\'IA a renvoyé une réponse incomplète. Réessayez, ou raccourcissez le CV.'
       : 'L\'optimisation IA a échoué : ' + (e && e.message || 'erreur inconnue') + '.';
     toast(msg);
+    if (code==='code'){ state.codeOk = false; try { localStorage.removeItem('passeats_code'); } catch(x){} $('codeStatus').textContent = msg; openPay(); }
     if (state.cv) { $('cvBody').classList.remove('hidden'); } else { $('cvEmpty').classList.remove('hidden'); }
   } finally {
     $('aiProgress').classList.add('hidden'); btn.disabled = false; state.ctl = null;
   }
 }
 $('btnOptimize').addEventListener('click', optimize);
+$('btnFree').addEventListener('click', ()=>{ if (wordCount(state.cvText) < 15){ toast('Collez ou importez d\'abord un CV.'); return; } heuristicConvert(); toast('CV généré au format ATS (version gratuite)'); });
+
+/* ---------- paywall modal ---------- */
+function openPay(){ $('payModal').classList.remove('hidden'); setTimeout(()=>$('accessCode').focus(), 50); }
+function closePay(){ $('payModal').classList.add('hidden'); }
+$('payClose').addEventListener('click', closePay);
+$('payModal').addEventListener('click', e=>{ if (e.target===$('payModal')) closePay(); });
+document.addEventListener('keydown', e=>{ if (e.key==='Escape') closePay(); });
+$('btnHaveCode').addEventListener('click', openPay);
+async function checkCode(){
+  const code = $('accessCode').value.trim(); if (!code){ $('codeStatus').textContent = 'Entrez un code.'; return false; }
+  $('codeStatus').textContent = 'Vérification…';
+  try {
+    const r = await fetch('/api/code', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ code }) });
+    const j = await r.json();
+    if (j.ok){ state.codeOk = true; try { localStorage.setItem('passeats_code', code); } catch(e){} $('codeStatus').textContent = 'Code valide — l\'IA est débloquée sur cet appareil.'; closePay(); toast('Forfait IA activé'); return true; }
+    state.codeOk = false; $('codeStatus').textContent = j.error || 'Code refusé.'; return false;
+  } catch(e){ $('codeStatus').textContent = 'Vérification impossible (connexion).'; return false; }
+}
+$('btnCheckCode').addEventListener('click', checkCode);
+$('accessCode').addEventListener('keydown', e=>{ if (e.key==='Enter'){ e.preventDefault(); checkCode(); } });
 $('btnStop').addEventListener('click', ()=>{ if(state.ctl) state.ctl.abort(); });
 
 function sanitizeCv(d){
@@ -728,7 +778,8 @@ function heuristicConvert(){
     if (hit){ cur = hit; return; }
     if (/@|linkedin\.com|^\+?\d[\d .()-]{7,}\d$/.test(l) && cur==='summary') return;
     (buckets[cur]||buckets.other).push(l.replace(/^[-•*·▪●◦‣]\s*/,'')); });
-  cv.summary = buckets.summary.slice(0,4).join(' ');
+  const clean = t => t.replace(/^(je\s+m['’]|je\s+me\s+|je|j['’]ai|j['’]|nous avons|nous|i|i have|i've)\s*/i,'').replace(/^\s*[:\-–—]\s*/,'').replace(/\s+/g,' ').trim().replace(/^./, ch=>ch.toUpperCase());
+  cv.summary = buckets.summary.slice(0,4).join(' ').replace(/\b(je|j['’]ai)\s+/gi,'').replace(/^./, ch=>ch.toUpperCase());
   if (buckets.skills.length) cv.skills.push({category:'Compétences', items: buckets.skills.flatMap(l=>l.split(/[,•|·;]/)).map(x=>x.trim()).filter(Boolean)});
   if (buckets.languages.length) cv.skills.push({category:'Langues', items: buckets.languages.flatMap(l=>l.split(/[,•|·;]/)).map(x=>x.trim()).filter(Boolean)});
   // experience: a header line (contains a date/year) starts an entry, following lines are bullets
@@ -736,8 +787,10 @@ function heuristicConvert(){
   const groupEntries = (arr, mk) => { const out=[]; let e=null; arr.forEach(l=>{ if (isHead(l) || !e){ e = mk(l); out.push(e); } else e.bullets.push(l); }); return out; };
   cv.experience = groupEntries(buckets.experience, l=>{ const d = l.match(/((?:\d{2}\/)?(?:19|20)\d{2}.*)$/); const head = d ? l.slice(0, d.index).replace(/[,\-–—|\s]+$/,'') : l; const parts = head.split(/\s[-–—]\s|\schez\s|\sat\s|\s@\s/); return {title:(parts[0]||'').trim(), company:(parts.slice(1).join(' - ')||'').trim(), location:'', start:d?d[1].split(/\s*[-–—]\s*/)[0]:'', end:d&&d[1].split(/\s*[-–—]\s*/)[1]||'', bullets:[]}; });
   cv.education = groupEntries(buckets.education, l=>{ const d = l.match(/((?:19|20)\d{2}.*)$/); const head = d ? l.slice(0,d.index).replace(/[,\-–—|\s]+$/,'') : l; const parts = head.split(/\s[-–—]\s/); return {degree:(parts[0]||'').trim(), school:(parts.slice(1).join(' - ')||'').trim(), location:'', start:'', end:d?d[1].trim():'', bullets:[], details:''}; }).map(e=>({...e, details:e.bullets.join(' ')}));
-  if (buckets.other.length) cv.extras.push({heading:'Informations complémentaires', lines:buckets.other});
-  state.cv = cv; state.aiReport = { changes:['Conversion manuelle (sans IA) : structure à une colonne avec titres standards, coordonnées isolées, puces normalisées.','Relisez chaque bloc et complétez les champs vides directement dans l\'aperçu.'], added:[], suggestions: (state.baseRes&&state.baseRes.misses||[]).map(m=>m.label) };
+  cv.experience.forEach(x=>{ x.bullets = x.bullets.map(clean).filter(Boolean); });
+  if (!cv.title && cv.experience[0] && cv.experience[0].title) cv.title = cv.experience[0].title;
+  if (buckets.other.length) cv.extras.push({heading:'Informations complémentaires', lines:buckets.other.map(clean)});
+  state.cv = cv; state.aiReport = { changes:['Version gratuite : structure à une colonne avec titres standards, coordonnées isolées, puces normalisées, première personne retirée.','Relisez chaque bloc et complétez ou corrigez directement dans l\'aperçu. Pour une réécriture complète et les mots-clés intégrés, utilisez le forfait IA.'], added:[], suggestions: (state.baseRes&&state.baseRes.misses||[]).map(m=>m.label) };
   $('cvEmpty').classList.add('hidden'); $('aiProgress').classList.add('hidden');
   renderCv(); rescore(true); setStep(4); showTab('cv');
 }
@@ -922,11 +975,13 @@ $('expPdf').addEventListener('click', ()=>{
   $('exportNote').textContent = 'Les fichiers se téléchargent directement. Le DOCX reste le format le plus sûr pour les candidatures en ligne.';
   try {
     const r = await fetch('/api/config'); const c = await r.json();
-    if (!c.ai){ state.aiOff = true; $('aiNote').textContent = 'L\'IA n\'est pas configurée sur ce site : le bouton applique une conversion manuelle (structure ATS sans réécriture).'; $('btnOptimize').lastChild.textContent = ' Convertir au format ATS'; }
-    if (c.accessCode){ state.needCode = true; $('codeField').classList.remove('hidden'); try { $('accessCode').value = localStorage.getItem('passeats_code') || ''; } catch(e){} }
-  } catch(e){ state.aiOff = true; $('aiNote').textContent = 'Serveur IA injoignable : conversion manuelle uniquement.'; $('btnOptimize').lastChild.textContent = ' Convertir au format ATS'; }
+    if (!c.ai){ state.aiOff = true; $('aiNote').textContent = 'L\'optimisation par IA n\'est pas disponible sur ce site pour le moment. La génération gratuite fonctionne normalement.'; }
+    if (c.offer) $('offerText').textContent = c.offer;
+    if (c.whatsapp){ const msg = encodeURIComponent(c.waMessage || 'Bonjour, je souhaite un code de forfait IA pour Passe-ATS.'); $('waLink').href = 'https://wa.me/' + c.whatsapp + '?text=' + msg; }
+    else { $('waLink').classList.add('hidden'); $('waNote').textContent = 'Contactez la personne qui vous a transmis ce site pour obtenir un code.'; }
+    if (c.accessCode){ state.needCode = true; let saved=''; try { saved = localStorage.getItem('passeats_code') || ''; } catch(e){} if (saved){ $('accessCode').value = saved; checkCode(); } }
+  } catch(e){ state.aiOff = true; $('aiNote').textContent = 'Serveur IA injoignable : génération gratuite uniquement.'; }
 })();
-$('accessCode').addEventListener('input', e=>{ try { localStorage.setItem('passeats_code', e.target.value); } catch(x){} });
 async function deliver(filename, data, mime){
   const blob = data instanceof Blob ? data : new Blob([data], {type:mime});
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000);
